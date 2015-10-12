@@ -9,6 +9,56 @@ import random
 import shutil
 import os
 
+import pandas as pd
+import StringIO
+from collections import defaultdict
+import dendropy
+
+def updatePamlAges(tracerages, treestring, outfile, age_scale = 10):
+    #this function takes in a path to a csv from TRACER with summaries for mean node ages, a labeled tree string from PAML, and an outfile name. It then writes the mean node age to the target tree and saves as a new file
+    #age_scale, optional, is factor to convert paml ages to 1 = MY
+    
+    targettree = dendropy.Tree.get(data=treestring, schema="newick")
+
+    df = pd.read_table(tracerages, header = 0)
+    df = df.set_index('Summary Statistic').T
+    kk = list(df.index) # list of each node in the tracer file--match this against the PAML labels in the tree
+
+    nodeinfo = {}
+
+    #extract the mean, lower, and upper from the tracer csv. Note below multiples these ages by 10 (assumes 1 MY = 10 from PAML analysis)
+    for nn in kk:
+        nodename = nn.strip("t_n")
+        print nodename
+        mean_age = df['mean'][nn] #* 10
+        lower, upper = [x.strip("[], ") for x in df['95% HPD Interval'][nn].split()]
+        nodeinfo[nodename] = {
+            "mean": float(mean_age) * age_scale,
+            "lower": float(lower) * age_scale,
+            "upper": float(upper) * age_scale
+        }
+
+    for node in targettree.postorder_node_iter():
+        if node.is_internal():
+            if node.label in nodeinfo:
+                node.age = nodeinfo[node.label]["mean"]
+                node.comments = "&HPD={{{lower}, {upper}}}".format(**nodeinfo[node.label])
+                node.label = ""
+            else:
+                print "Internal node doesn't have an age"
+        else:
+            node.age = 0.0 # leafs need ages in the present as well
+            # fix leaf names
+            node.taxon.label = node.taxon.label.split(" ", 1)[1]
+
+    targettree.set_edge_lengths_from_node_ages() #this is the function from dendropy that converts the tree to ultrametric from the node ages
+
+    writepath = os.getcwd() + "/"
+    print "writing tree to file {}".format(writepath + outfile)
+    targettree.write(path=writepath + outfile, schema="nexus", suppress_item_comments=False)
+    
+
+
 def getPamlPars(ctl):
     #extract arguments froma paml ctl file and stick them into an ordered dictionary
     pardict = OrderedDict()
@@ -21,25 +71,25 @@ def getPamlPars(ctl):
     return pardict
 
 
-def writeCTL(hessian, tree_title, partitions, template_ctl, run = 1):
+def writeCTL(template_ctl):
     #writes PAML control file
-    if hessian == "hessian":
-        template_ctl["usedata"] = "3"
-    elif hessian == "post-hessian":
-        template_ctl["usedata"] = "2"
-    else:
-        print "\nneed information for usedata argument\n"
-    number_partitions = os.path.basename(partitions).split("_")[0]
-    template_ctl["seqfile"] = os.path.basename(partitions)
-    template_ctl["treefile"] = tree_title
-    n1 = number_partitions + "_partitions"
-    n2 = tree_title
-    n3 = "_run_{}".format(run)
-    template_ctl["outfile"] = "{}_{}_{}.out".format(n1, n2, n3)
-    template_ctl["ndata"] = number_partitions
+    # if hessian == "hessian":
+    #     template_ctl["usedata"] = "3"
+    # elif hessian == "post-hessian":
+    #     template_ctl["usedata"] = "2"
+    # else:
+    #     print "\nneed information for usedata argument\n"
+    #number_partitions = partitions
+    #template_ctl["seqfile"] = os.path.basename(partitions)
+    #template_ctl["treefile"] = tree_title
+    #n1 = number_partitions + "_partitions"
+    #n2 = tree_title
+    #n3 = "_run_{}".format(run)
+    #template_ctl["outfile"] = "{}_{}_{}.out".format(n1, n2, n3)
+    #template_ctl["ndata"] = number_partitions
     #print "\nNew file"
     print len(template_ctl.keys())
-    ctl_name = "ctl_{}_{}_{}_{}.ctl".format(hessian, n3, n1, n2 )
+    ctl_name = "caringimorph.ctl" #"ctl_{}_{}_{}_{}.ctl".format(hessian, n3, n1, n2 )
 
     #helper function to write ctl files, takes a dictionary of parameters to update (pars)
     temp_ctl = r"""
