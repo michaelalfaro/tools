@@ -411,8 +411,8 @@ def annotatePaml(target_tree, scheme, raw = False):
     for calibration_node_number in scheme:
         #print calibration_node_number
         lower, upper = scheme[calibration_node_number]
-        print "\n in annotatePaml"
-        print "node is {} lower is {} upper is {}\t".format(calibration_node_number, lower, upper)
+        #print "\n in annotatePaml"
+        #print "node is {} lower is {} upper is {}\t".format(calibration_node_number, lower, upper)
 
         if str(lower) == "nan":
             lower = None
@@ -422,9 +422,9 @@ def annotatePaml(target_tree, scheme, raw = False):
         
 
         calibration_text = addPamlCalibration(lower, upper) #get the calibration string
-        print "calibration text is {}".format(calibration_text)
+        #print "calibration text is {}".format(calibration_text)
         target_calibration_node = target_tree.search_nodes(nodenumber = str(calibration_node_number))
-        print "targ cali node is {} and text is {}\n".format(target_calibration_node[0].nodenumber, calibration_text)
+        #print "targ cali node is {} and text is {}\n".format(target_calibration_node[0].nodenumber, calibration_text)
         target_calibration_node[0].add_features( paml_cal = str(calibration_text) )
         if raw == True:
             print "raw is true"
@@ -433,7 +433,7 @@ def annotatePaml(target_tree, scheme, raw = False):
             target_calibration_node[0].add_features( raw_cal = str(rawtxt) )
             
     calibration_tree_nhx = target_tree.write(features = ['nodenumber', "raw_cal", "paml_cal"], format = 9,format_root_node=True)
-    print "***this is the nhx tree***\n\n" + calibration_tree_nhx
+    #print "***this is the nhx tree***\n\n" + calibration_tree_nhx
     return makePamlTree(calibration_tree_nhx) #title of the tree?    
 
 
@@ -442,8 +442,8 @@ def annotateAndReturn(target_tree, scheme, raw = False):
     for calibration_node_number in scheme:
         #print calibration_node_number
         lower, upper = scheme[calibration_node_number]
-        print "\n in annotatePaml"
-        print "node is {} lower is {} upper is {}\t".format(calibration_node_number, lower, upper)
+        #print "\n in annotatePaml"
+        #print "node is {} lower is {} upper is {}\t".format(calibration_node_number, lower, upper)
 
         if str(lower) == "nan":
             lower = None
@@ -453,14 +453,14 @@ def annotateAndReturn(target_tree, scheme, raw = False):
         
 
         calibration_text = addPamlCalibration(lower, upper) #get the calibration string
-        print "calibration text is {}".format(calibration_text)
+        #print "calibration text is {}".format(calibration_text)
         target_calibration_node = target_tree.search_nodes(nodenumber = str(calibration_node_number))
-        print "targ cali node is {} and text is {}\n".format(target_calibration_node[0].nodenumber, calibration_text)
+        #print "targ cali node is {} and text is {}\n".format(target_calibration_node[0].nodenumber, calibration_text)
         target_calibration_node[0].add_features( paml_cal = str(calibration_text) )
         if raw == True:
-            print "raw is true"
+            #print "raw is true"
             rawtxt = "Lower:{} Upper:{}".format(str(lower), str(upper))
-            print "the raw txt is: {}".format(rawtxt)
+            #print "the raw txt is: {}".format(rawtxt)
             target_calibration_node[0].add_features( raw_cal = str(rawtxt) )
             
     #calibration_tree_nhx = tt.write(features = ['nodenumber', "raw_cal", "paml_cal"], format = 9,format_root_node=True)
